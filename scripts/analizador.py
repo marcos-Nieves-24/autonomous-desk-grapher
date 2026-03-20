@@ -1,11 +1,13 @@
 # librerias
 import os
-
-import pandas as pd
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
+from scipy import stats
+import pandas as pd 
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pathlib 
+import scikit_posthocs as sp
 
 # cargar datos
 file_path = pathlib.Path("data/database.csv")
@@ -17,9 +19,81 @@ print(data.describe())
 # verificar valores nulos
 print(data.isnull().sum())
 # distribución de la variable objetivo
-sns.barplot(x='porcentaje_humedad', y='muestra', data=data)
-plt.title('Distribución de la Variable Objetivo: Porcentaje de Humedad')
-plt.xlabel('Porcentaje de Humedad')
-plt.ylabel('Frecuencia')
+sns.barplot(x='muestra', y='porcentaje_humedad', data=data)
+plt.title('Contenido de humedad')
+plt.xlabel('Muestra')
+plt.ylabel('Porcentaje de Humedad')
 
 plt.savefig('data/figuras/distribucion_variable_objetivo.png')
+
+# análisis de varianza (ANOVA)
+groups = [group["porcentaje_humedad"].values for name, group in data.groupby("grupo")]
+f_statistic, p_value = stats.f_oneway(*groups)
+print(f"ANOVA F-statistic: {f_statistic}, p-value: {p_value}")
+
+# prueba de Tukey para comparaciones múltiples
+if p_value < 0.05:
+    print("\nRunning Tukey test...\n")
+    
+    tukey = pairwise_tukeyhsd(
+        endog=data["porcentaje_humedad"],
+        groups=data["grupo"],
+        alpha=0.05
+    )
+    
+    print(tukey)
+    tukey.plot_simultaneous()
+    plt.title('Tukey HSD Test')
+    plt.xlabel('Mean Difference')
+    plt.savefig('data/figuras/tukey_test.png')
+else:
+    print("No significant differences found among groups.")
+
+# gráfico de cajas para visualizar las diferencias entre grupos
+
+stats = data.groupby("grupo")["porcentaje_humedad"].agg(["mean", "std"])
+
+# estadísticas para asignar letras
+groups = stats.index
+means = stats["mean"]
+stds = stats["std"]
+
+# Tukey
+tukey = pairwise_tukeyhsd(data["porcentaje_humedad"], data["grupo"], alpha=0.05)
+print(tukey)
+
+# Check significance
+reject = tukey.reject[0]  # True or False
+
+# Assign letters
+if reject:
+    letters = ['a', 'b']  # different
+else:
+    letters = ['a', 'a']  # same
+
+# Plot
+plt.figure()
+
+bars = plt.bar(
+    groups,
+    means,
+    yerr=stds,
+    capsize=6
+)
+
+# Colors
+colors = ["#1f77b4", "orange"]
+for bar, color in zip(bars, colors):
+    bar.set_color(color)
+
+# Add Tukey letters above bars
+for i, (mean, std, letter) in enumerate(zip(means, stds, letters)):
+    plt.text(i, mean + std + 1, letter, ha='center', fontsize=14, fontweight='bold')
+
+plt.title('Contenido de Humedad por Grupo')
+plt.xlabel('Grupo')
+plt.ylabel('Porcentaje de Humedad')
+
+plt.tight_layout()
+plt.savefig('data/figuras/boxplot_letras.png', dpi=600)
+
