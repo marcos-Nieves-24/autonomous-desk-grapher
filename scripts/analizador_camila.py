@@ -10,7 +10,7 @@ import pathlib
 import scikit_posthocs as sp
 
 # cargar datos
-file_path = pathlib.Path("data/database.csv")
+file_path = pathlib.Path("data_camila/database_camila.csv")
 data = pd.read_csv(file_path, encoding='utf-8', sep=';')
 # mostrar las primeras filas del dataset
 print(data.head())
@@ -25,7 +25,7 @@ plt.title('Contenido de humedad')
 plt.xlabel('Muestra')
 plt.ylabel('Porcentaje de Humedad')
 
-plt.savefig('data/figuras/distribucion_variable_objetivo.png')
+plt.savefig('data_camila/figuras/distribucion_variable_objetivo.png')
 
 # análisis de varianza (ANOVA)
 groups = [group["porcentaje_humedad"].values for name, group in data.groupby("grupo")]
@@ -46,7 +46,7 @@ if p_value < 0.05:
     tukey.plot_simultaneous()
     plt.title('Tukey HSD Test')
     plt.xlabel('Mean Difference')
-    plt.savefig('data/figuras/tukey_test.png')
+    plt.savefig('data_camila/figuras/tukey_test.png')
 else:
     print("No significant differences found among groups.")
 
@@ -60,18 +60,31 @@ means = stats["mean"]
 stds = stats["std"]
 
 # Tukey
-tukey = pairwise_tukeyhsd(data["porcentaje_humedad"], data["grupo"], alpha=0.05)
+tukey = pairwise_tukeyhsd(
+    data["porcentaje_humedad"],
+    data["grupo"],
+    alpha=0.05
+)
+
 print(tukey)
 
-# Check significance
-reject = tukey.reject[0]  # True or False
+groups = tukey.groupsunique
+means = data.groupby("grupo")["porcentaje_humedad"].mean().loc[groups]
+stds = data.groupby("grupo")["porcentaje_humedad"].std().loc[groups]
 
-# Assign letters
-if reject:
-    letters = ['a', 'b']  # different
-else:
-    letters = ['a', 'a']  # same
+reject = tukey.reject
 
+# Default letters
+letters = ['a'] * len(groups)
+
+# Simple logic for 3 groups
+if len(groups) == 3:
+    if all(reject):
+        letters = ['a', 'b', 'c']
+    elif not any(reject):
+        letters = ['a', 'a', 'a']
+    else:
+        letters = ['a', 'a', 'b']
 # Plot
 plt.figure()
 
@@ -83,7 +96,7 @@ bars = plt.bar(
 )
 
 # Colors
-colors = ["#1f77b4", "orange"]
+colors = ["#1f77b4", "orange", "#bcbd22"]
 for bar, color in zip(bars, colors):
     bar.set_color(color)
 
@@ -96,5 +109,5 @@ plt.xlabel('Grupo')
 plt.ylabel('Porcentaje de Humedad')
 
 plt.tight_layout()
-plt.savefig('data/figuras/boxplot_letras.png', dpi=600)
+plt.savefig('data_camila/figuras/boxplot_letras.png', dpi=600)
 
