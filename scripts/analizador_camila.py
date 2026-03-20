@@ -8,6 +8,7 @@ import seaborn as sns
 import numpy as np
 import pathlib 
 import scikit_posthocs as sp
+import dataframe_image as dfi
 
 # cargar datos
 file_path = pathlib.Path("data_camila/database_camila.csv")
@@ -15,7 +16,8 @@ data = pd.read_csv(file_path, encoding='utf-8', sep=';')
 # mostrar las primeras filas del dataset
 print(data.head())
 # resumen estadístico
-print(data.describe())
+table_des = data.describe()
+dfi.export(table_des, "data/figuras/resumen_estadistico.png", dpi=600)
 # verificar valores nulos
 print(data.isnull().sum())
 # distribución de la variable objetivo
