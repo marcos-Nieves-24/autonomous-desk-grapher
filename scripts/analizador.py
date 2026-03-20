@@ -64,10 +64,10 @@ elif p_value < 0.05:
 else:
     text = "ns"
 
-plt.text((x1+x2)/2, y+1.2, text, ha='center', fontsize=14)
+plt.text((x1+x2)/2, y+1.2, text, ha='center', fontsize=16)
 
-plt.xlabel("Grupo")
-plt.ylabel("perdida de humedad (%)")
+plt.xlabel("Grupo", fontsize=16)
+plt.ylabel("perdida de humedad (%)", fontsize=16)
 
 # y axis
 plt.grid(axis='y', linestyle='--', alpha=0.5)
