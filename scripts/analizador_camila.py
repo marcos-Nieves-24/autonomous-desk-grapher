@@ -104,9 +104,9 @@ for bar, color in zip(bars, colors):
 for i, (mean, std, letter) in enumerate(zip(means, stds, letters)):
     plt.text(i, mean + std + 1, letter, ha='center', fontsize=14, fontweight='bold')
 
-plt.title('Contenido de Humedad por Grupo')
+plt.title('Humedad relativa')
 plt.xlabel('Grupo')
-plt.ylabel('Porcentaje de Humedad')
+plt.ylabel('Perdida de humedad (%)')
 
 plt.tight_layout()
 plt.savefig('data_camila/figuras/boxplot_letras.png', dpi=600)

@@ -22,78 +22,55 @@ print(data.isnull().sum())
 sns.barplot(x='muestra', y='porcentaje_humedad', data=data)
 
 plt.title('Contenido de humedad')
-plt.xlabel('Muestra')
-plt.ylabel('Porcentaje de Humedad')
+plt.xlabel('Muestras')
+plt.ylabel('Porcentaje de humedad (%)')
 
 plt.savefig('data/figuras/distribucion_variable_objetivo.png')
 
-# análisis de varianza (ANOVA)
-groups = [group["porcentaje_humedad"].values for name, group in data.groupby("grupo")]
-f_statistic, p_value = stats.f_oneway(*groups)
-print(f"ANOVA F-statistic: {f_statistic}, p-value: {p_value}")
+# t-test
+group1 = data[data["grupo"] == "A"]["porcentaje_humedad"]
+group2 = data[data["grupo"] == "B"]["porcentaje_humedad"]
 
-# prueba de Tukey para comparaciones múltiples
-if p_value < 0.05:
-    print("\nRunning Tukey test...\n")
-    
-    tukey = pairwise_tukeyhsd(
-        endog=data["porcentaje_humedad"],
-        groups=data["grupo"],
-        alpha=0.05
-    )
-    
-    print(tukey)
-    tukey.plot_simultaneous()
-    plt.title('Tukey HSD Test')
-    plt.xlabel('Mean Difference')
-    plt.savefig('data/figuras/tukey_test.png')
-else:
-    print("No significant differences found among groups.")
+# t-test
+t_stat, p_value = stats.ttest_ind(group1, group2)
 
-# gráfico de cajas para visualizar las diferencias entre grupos
-
-stats = data.groupby("grupo")["porcentaje_humedad"].agg(["mean", "std"])
-
-# estadísticas para asignar letras
-groups = stats.index
-means = stats["mean"]
-stds = stats["std"]
-
-# Tukey
-tukey = pairwise_tukeyhsd(data["porcentaje_humedad"], data["grupo"], alpha=0.05)
-print(tukey)
-
-# Check significance
-reject = tukey.reject[0]  # True or False
-
-# Assign letters
-if reject:
-    letters = ['a', 'b']  # different
-else:
-    letters = ['a', 'a']  # same
+# Stats
+means = data.groupby("grupo")["porcentaje_humedad"].mean()
+stds = data.groupby("grupo")["porcentaje_humedad"].std()
 
 # Plot
 plt.figure()
+bars = plt.bar(means.index, means.values, yerr=stds, capsize=6)
 
-bars = plt.bar(
-    groups,
-    means,
-    yerr=stds,
-    capsize=6
-)
+# color
+colors = ["#4C72B0", "salmon"] 
 
-# Colors
-colors = ["#1f77b4", "orange"]
 for bar, color in zip(bars, colors):
     bar.set_color(color)
 
-# Add Tukey letters above bars
-for i, (mean, std, letter) in enumerate(zip(means, stds, letters)):
-    plt.text(i, mean + std + 1, letter, ha='center', fontsize=14, fontweight='bold')
+# Add significance line
+x1, x2 = 0, 1
+y = max(means + stds) + 2
 
-plt.title('Contenido de Humedad por Grupo')
-plt.xlabel('Grupo')
-plt.ylabel('Porcentaje de Humedad')
+plt.plot([x1, x1, x2, x2], [y, y+1, y+1, y], lw=1.5)
+
+# Add asterisk
+if p_value < 0.001:
+    text = "***"
+elif p_value < 0.01:
+    text = "**"
+elif p_value < 0.05:
+    text = "*"
+else:
+    text = "ns"
+
+plt.text((x1+x2)/2, y+1.2, text, ha='center', fontsize=14)
+
+plt.xlabel("Grupo")
+plt.ylabel("perdida de humedad (%)")
+
+# y axis
+plt.grid(axis='y', linestyle='--', alpha=0.5)
 
 plt.tight_layout()
 plt.savefig('data/figuras/boxplot_letras.png', dpi=600)
