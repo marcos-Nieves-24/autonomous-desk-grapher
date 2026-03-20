@@ -8,7 +8,7 @@ import seaborn as sns
 import numpy as np
 import pathlib 
 import scikit_posthocs as sp
-import dataframe_image as dfi
+
 
 # cargar datos
 file_path = pathlib.Path("data/database.csv")
@@ -16,17 +16,47 @@ data = pd.read_csv(file_path, encoding='utf-8', sep=';')
 # mostrar las primeras filas del dataset
 print(data.head())
 # resumen estadístico
-table_des = data.describe()
+table_des = data.describe() 
 
-dfi.export(table_des, "data/figuras/resumen_estadistico.png", dpi=600)
+fig, ax = plt.subplots()
+ax.axis('off')
+
+table = ax.table(
+    cellText=table_des.round(2).values,
+    colLabels=table_des.columns,
+    rowLabels=table_des.index,
+    loc='center',
+)
+
+table.auto_set_font_size(False)
+table.set_fontsize(10)
+table.scale(1.2, 1.2)
+
+plt.savefig("data/figuras/resumen_estadistico.png", bbox_inches='tight', dpi=600)
+plt.close()
+
 # verificar valores nulos
 print(data.isnull().sum())
 # distribución de la variable objetivo
-sns.barplot(x='muestra', y='porcentaje_humedad', data=data)
+# configuración de estilo
+sns.set(style="whitegrid")
 
-plt.title('Contenido de humedad')
-plt.xlabel('Muestras')
-plt.ylabel('Porcentaje de humedad (%)')
+plt.rcParams["font.family"] = "DejaVu Sans"
+plt.rcParams["font.size"] = 14
+
+# Plot
+fig, ax = plt.subplots()
+
+sns.barplot(
+    x='muestra',
+    y='porcentaje_humedad',
+    data=data,
+    ax=ax
+)
+
+ax.set_title('Contenido de humedad')
+ax.set_xlabel('Muestras')
+ax.set_ylabel('Porcentaje de humedad (%)')
 
 plt.savefig('data/figuras/distribucion_variable_objetivo.png')
 
@@ -56,6 +86,9 @@ x1, x2 = 0, 1
 y = max(means + stds) + 2
 
 plt.plot([x1, x1, x2, x2], [y, y+1, y+1, y], lw=1.5)
+
+plt.rcParams["font.family"] = "DejaVu Sans"
+plt.rcParams["font.size"] = 14
 
 # Add asterisk
 if p_value < 0.001:
